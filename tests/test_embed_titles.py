@@ -1,4 +1,3 @@
-import hashlib
 import json
 from collections.abc import Sequence
 from pathlib import Path
@@ -7,6 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from embedding_recommendation_system.embed_titles import (
+    canonical_json_sha256,
     generate_title_embeddings,
 )
 
@@ -93,11 +93,44 @@ def test_generate_title_embeddings_wires_complete_pipeline(
     assert manifest["field"] == "title"
     assert manifest["model"] == "example/model"
     assert manifest["revision"] == "example-revision"
-    assert (
-        manifest["catalog_sha256"]
-        == hashlib.sha256(video_catalog.read_bytes()).hexdigest()
-    )
+    assert manifest["catalog_canonical_sha256"] == canonical_json_sha256(video_catalog)
     np.testing.assert_allclose(
         embeddings,
         np.array([[0.6, 0.8]], dtype=np.float32),
     )
+
+
+def test_canonical_json_sha256_ignores_formatting(
+    tmp_path: Path,
+) -> None:
+    compact_path = tmp_path / "compact.json"
+    formatted_path = tmp_path / "formatted.json"
+    payload = {
+        "seed": [
+            {
+                "id": "51f7d6d8-a5b0-4695-a997-61b047babdb7",
+                "title": "Neuro-Symbolic AI",
+            }
+        ]
+    }
+
+    compact_path.write_text(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+        newline="\n",
+    )
+    formatted_path.write_text(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+        newline="\r\n",
+    )
+
+    assert canonical_json_sha256(compact_path) == canonical_json_sha256(formatted_path)

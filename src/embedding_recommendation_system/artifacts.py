@@ -24,7 +24,7 @@ class EmbeddingRun:
     model: str
     revision: str | None
     field: str
-    catalog_sha256: str
+    catalog_canonical_sha256: str
 
 
 def normalize_embeddings(embeddings: ArrayLike) -> NDArray[np.float32]:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -25,11 +26,20 @@ DEFAULT_MAX_MODEL_LEN = 512
 Embedder = Callable[..., NDArray[np.float32]]
 
 
-def file_sha256(path: Path) -> str:
-    """Return the lowercase SHA-256 digest of a file."""
+def canonical_json_sha256(path: Path) -> str:
+    """Hash JSON content independently of formatting and line endings."""
 
-    with path.open("rb") as file:
-        return hashlib.file_digest(file, "sha256").hexdigest()
+    with path.open(encoding="utf-8") as file:
+        payload = json.load(file)
+
+    canonical_json = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    )
+
+    return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 
 def generate_title_embeddings(
@@ -59,7 +69,7 @@ def generate_title_embeddings(
         model=model,
         revision=revision,
         field="title",
-        catalog_sha256=file_sha256(video_catalog),
+        catalog_canonical_sha256=canonical_json_sha256(video_catalog),
     )
 
     save_embedding_artifact(

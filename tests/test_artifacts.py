@@ -58,7 +58,7 @@ def test_save_embedding_artifact_writes_reproducible_files(
         model="Qwen/Qwen3-Embedding-0.6B",
         revision="example-revision",
         field="title",
-        catalog_sha256="example-checksum",
+        catalog_canonical_sha256="example-checksum",
     )
     output_dir = tmp_path / "title-run"
 
@@ -104,7 +104,7 @@ def test_save_embedding_artifact_writes_reproducible_files(
         },
     ]
     assert manifest == {
-        "catalog_sha256": "example-checksum",
+        "catalog_canonical_sha256": "example-checksum",
         "count": 2,
         "dimensions": 2,
         "dtype": "float32",
@@ -133,7 +133,7 @@ def test_save_embedding_artifact_rejects_row_count_mismatch(
         model="Qwen/Qwen3-Embedding-0.6B",
         revision=None,
         field="title",
-        catalog_sha256="example-checksum",
+        catalog_canonical_sha256="example-checksum",
     )
 
     with pytest.raises(ArtifactError, match="row count"):
